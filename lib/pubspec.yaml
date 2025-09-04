@@ -1,0 +1,28 @@
+name: zip_extractor_app
+description: A Flutter app to extract ZIP files with multilingual support and AdMob integration.
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # 파일 압축 해제 관련
+  file_picker: ^6.1.1
+  archive: ^3.3.7
+  path_provider: ^2.1.2
+  path: ^1.9.0
+
+  # 광고
+  google_mobile_ads: ^3.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
