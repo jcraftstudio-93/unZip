@@ -1,0 +1,11 @@
+| 항목                                       | 설명                                                                                               |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------ |
+| `package="com.yourcompany.zipextractor"` | 앱 등록 시 사용한 패키지명으로 교체                                                                             |
+| `APPLICATION_ID`                         | AdMob 앱 ID로 정확히 변경                                                                               |
+| 권한 범위                                    | `WRITE_EXTERNAL_STORAGE`, `READ_EXTERNAL_STORAGE`는 Android 11 이상에서는 무시되므로 **대체 저장 경로 또는 SAF 권장** |
+
+
+파일경로
+android/app/src/main/AndroidManifest.xml
+
+
