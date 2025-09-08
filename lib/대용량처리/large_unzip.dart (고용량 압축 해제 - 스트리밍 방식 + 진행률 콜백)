@@ -1,0 +1,60 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:archive/archive_io.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
+
+class LargeUnzipper {
+  static Future<bool?> pickAndExtractLargeZipFile({
+    required void Function(double progress) onProgress,
+  }) async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['zip'],
+    );
+
+    if (result == null || result.files.isEmpty) return null;
+
+    final file = File(result.files.single.path!);
+
+    // 1GB 초과 파일 경고
+    final maxSize = 1024 * 1024 * 1024; // 1GB
+    if (await file.length() > maxSize) {
+      return Future.error('1GB를 초과하는 파일은 지원하지 않습니다.');
+    }
+
+    final inputStream = InputFileStream(file.path);
+
+    final archive = ZipDecoder().decodeBuffer(inputStream);
+
+    final outputDir = await getApplicationDocumentsDirectory();
+    final extractionPath = Directory('${outputDir.path}/unzipped_large');
+    if (!extractionPath.existsSync()) {
+      extractionPath.createSync(recursive: true);
+    }
+
+    int totalFiles = archive.length;
+    int processedFiles = 0;
+
+    try {
+      for (final file in archive) {
+        final filePath = p.join(extractionPath.path, file.name);
+        if (file.isFile) {
+          final outFile = File(filePath);
+          outFile.createSync(recursive: true);
+          outFile.writeAsBytesSync(file.content as List<int>);
+        } else {
+          Directory(filePath).createSync(recursive: true);
+        }
+        processedFiles++;
+        onProgress(processedFiles / totalFiles);
+      }
+    } catch (e) {
+      return false;
+    } finally {
+      inputStream.close();
+    }
+
+    return true;
+  }
+}
