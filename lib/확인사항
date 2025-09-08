@@ -8,4 +8,29 @@
 파일경로
 android/app/src/main/AndroidManifest.xml
 
+***필수 Play Console 등록 요건 체크리스트 ✅***
+| 항목                               | 체크 | 설명 / 해결 방법                                                         |
+| -------------------------------- | -- | ------------------------------------------------------------------ |
+| 앱 번들 (.aab) 업로드                  | ✅  | 이미 `.aab`로 업로드 완료                                                  |
+| 버전 설정 (`pubspec.yaml`)           | ✅  | `version: 1.0.0+1` 설정됨                                             |
+| 패키지명 설정 (`AndroidManifest.xml`)  | ⬜  | `package="com.example.zip_extractor_app"` → 실제 등록 패키지명과 **일치**해야 함 |
+| 광고 ID 권한 (`AndroidManifest.xml`) | ⬜  | Android 13+ 대응 필요: 아래 코드 추가 ↓                                      |
+| 광고 SDK 초기화                       | ✅  | `AdManager().initialize()` 정상                                      |
+| 테스터 지정                           | ⬜  | 내부 테스트 시 테스터 이메일 추가 필요                                             |
+| 앱 아이콘                            | ⬜  | 기본 아이콘이면 커스터마이징 추천 (`res/mipmap`)                                  |
+| 화면 캡처                            | ⬜  | Play Console 등록 시 필요 (PNG, 320px 이상 권장)                            |
+| 앱 설명 / 스토어 등록 정보                 | ⬜  | Play Store 관리 콘솔에서 작성 필요                                           |
 
+✅ ZIP 압축 해제 앱 등록 전 최종 점검 리스트
+1. 코드 검사 ✅
+📦 파일 구조
+main.dart – UI 및 로직 통합
+unzip.dart – 압축 해제 로직
+ad_manager.dart – 광고 관리 (코드에는 없지만 있다고 가정)
+pubspec.yaml – 의존성 및 앱 버전 정보 명확함
+
+📌 전반적 상태
+ 기능적으로 ZIP 파일 선택 → 압축 해제 → 파일 목록 표시가 명확히 구현됨
+ 언어 전환 (한/영) 가능
+ 배너 광고 및 전면 광고 포함됨
+ 다트 코드 구조가 깔끔하고, 큰 문제 없음
