@@ -1,0 +1,40 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.yourcompany.zipextractor"> <!-- ← 패키지명 실제 등록명으로 변경 -->
+
+    <!-- 광고 ID 권한 (Android 13 대응) -->
+    <uses-permission android:name="com.google.android.gms.permission.AD_ID"/>
+
+    <!-- 파일 접근 권한 (압축 해제 결과 저장 등 필요 시) -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"/>
+
+    <application
+        android:label="ZIP Extractor"
+        android:icon="@mipmap/ic_launcher"
+        android:usesCleartextTraffic="true"
+        android:requestLegacyExternalStorage="true"  <!-- 안드로이드 10 대응 -->
+        android:theme="@style/LaunchTheme">
+
+        <!-- AdMob 광고 초기화를 위한 metadata -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-XXXXXXXXXXXXXXXX~YYYYYYYYYY"/> <!-- ← 본인 앱 ID로 변경 -->
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:launchMode="singleTop"
+            android:theme="@style/NormalTheme"
+            android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
+            android:hardwareAccelerated="true"
+            android:windowSoftInputMode="adjustResize">
+
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
