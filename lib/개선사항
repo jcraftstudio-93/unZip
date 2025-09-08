@@ -1,0 +1,20 @@
+1. ZIP 파일 크기 체크 (100MB 이상 경고)
+파일 선택 후 크기 체크해서 너무 크면 경고 띄우기
+
+final file = File(result.files.single.path!);
+final fileSizeMB = await file.length() / (1024 * 1024);
+if (fileSizeMB > 100) {
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text(t('File too large (over 100MB)', '파일 크기가 너무 큽니다 (100MB 이상)'))),
+  );
+  return;
+}
+
+
+2. 추출 경로 선택 옵션 (사용자가 저장 위치 지정)
+path_provider 대신 file_picker를 이용해서 폴더 선택하도록 변경
+
+final selectedDirectory = await FilePicker.platform.getDirectoryPath();
+if (selectedDirectory == null) return null; // 사용자가 취소
+
+final extractionPath = Directory(selectedDirectory);
