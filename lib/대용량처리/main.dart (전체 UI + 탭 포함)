@@ -1,0 +1,241 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+import 'ad_manager.dart';
+import 'unzip.dart';
+import 'large_unzip.dart'; // 고용량 전용 unzip 로직 (스트리밍 방식)
+
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  AdManager().initialize();
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'ZIP Extractor',
+      theme: ThemeData(primarySwatch: Colors.blueGrey),
+      home: const ZipHomeScreen(),
+    );
+  }
+}
+
+class ZipHomeScreen extends StatefulWidget {
+  const ZipHomeScreen({super.key});
+
+  @override
+  State<ZipHomeScreen> createState() => _ZipHomeScreenState();
+}
+
+class _ZipHomeScreenState extends State<ZipHomeScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<bool> _onWillPop() async {
+    return (await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('앱을 종료하시겠습니까?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('취소'),
+              ),
+              TextButton(
+                onPressed: () {
+                  AdManager().showInterstitialAd();
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    exit(0);
+                  });
+                },
+                child: const Text('종료'),
+              ),
+            ],
+          ),
+        )) ??
+        false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return WillPopScope(
+      onWillPop: _onWillPop,
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('ZIP 압축 해제기'),
+          bottom: TabBar(
+            controller: _tabController,
+            tabs: const [
+              Tab(text: '일반 압축 해제'),
+              Tab(text: '고용량 압축 해제'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          controller: _tabController,
+          children: const [
+            NormalUnzipTab(),
+            LargeFileUnzipTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// 일반 압축 해제 탭 UI 및 기능
+class NormalUnzipTab extends StatefulWidget {
+  const NormalUnzipTab({super.key});
+
+  @override
+  State<NormalUnzipTab> createState() => _NormalUnzipTabState();
+}
+
+class _NormalUnzipTabState extends State<NormalUnzipTab> {
+  List<String> extractedFiles = [];
+
+  Future<void> _handleZipExtraction() async {
+    final files = await Unzipper.pickAndExtractZipFile();
+    if (files != null) {
+      setState(() {
+        extractedFiles = files;
+      });
+      // 다이얼로그로 완료 알림
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('압축 해제 완료!'),
+          content: Text('${files.length}개의 파일이 추출되었습니다.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text('확인'))
+          ],
+        ),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _handleZipExtraction,
+          child: const Text('ZIP 파일 선택 및 압축 해제'),
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          '압축 해제된 파일 목록:',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.builder(
+            itemCount: extractedFiles.length,
+            itemBuilder: (context, index) {
+              return ListTile(
+                title: Text(extractedFiles[index]),
+              );
+            },
+          ),
+        ),
+        SizedBox(height: 50, child: AdManager().getBannerWidget()),
+      ],
+    );
+  }
+}
+
+// 고용량 압축 해제 탭 UI 및 기능
+class LargeFileUnzipTab extends StatefulWidget {
+  const LargeFileUnzipTab({super.key});
+
+  @override
+  State<LargeFileUnzipTab> createState() => _LargeFileUnzipTabState();
+}
+
+class _LargeFileUnzipTabState extends State<LargeFileUnzipTab> {
+  String status = '압축 파일을 선택해 주세요.';
+  double progress = 0.0;
+
+  Future<void> _handleLargeZipExtraction() async {
+    final result = await LargeUnzipper.pickAndExtractLargeZipFile(
+      onProgress: (double p) {
+        setState(() {
+          progress = p;
+          status = '압축 해제 진행 중: ${(p * 100).toStringAsFixed(1)}%';
+        });
+      },
+    );
+
+    if (result == null) {
+      setState(() {
+        status = '압축 해제를 취소했습니다.';
+        progress = 0;
+      });
+    } else if (result) {
+      setState(() {
+        status = '압축 해제가 완료되었습니다!';
+        progress = 1.0;
+      });
+
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('완료'),
+          content: const Text('고용량 압축 해제가 성공적으로 완료되었습니다.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('확인'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      setState(() {
+        status = '압축 해제 중 오류가 발생했습니다.';
+        progress = 0;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          ElevatedButton(
+            onPressed: _handleLargeZipExtraction,
+            child: const Text('고용량 ZIP 파일 선택 및 압축 해제'),
+          ),
+          const SizedBox(height: 20),
+          Text(status),
+          const SizedBox(height: 20),
+          LinearProgressIndicator(value: progress),
+          const Spacer(),
+          SizedBox(height: 50, child: AdManager().getBannerWidget()),
+        ],
+      ),
+    );
+  }
+}
